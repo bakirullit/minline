@@ -1,0 +1,19 @@
+Metadata-Version: 2.4
+Name: minline
+Version: 0.1.0
+Summary: Menu-inline framework for Telegram bots
+Author: bakirullit
+Author-email: Bakdaulet <bakirullit@gmail.com>
+License: MIT
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: aiogram>=3.3
+Requires-Dist: redis>=5.0.0
+Dynamic: author
+Dynamic: requires-python
+
+# minline
+
+**Menu-inline framework for Telegram bots**
+
+Build Telegram inline menu systems with localized rendering, button logic separation, and extensible components.
