@@ -1,3 +1,7 @@
+# Minline - Custom Telegram Menu Framework
+# Copyright (c) 2025 Bakirullit
+# License: Minline License (Non-Commercial) – see LICENSE file for details
+
 from aiogram import Bot, Dispatcher, Router
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import CommandStart
