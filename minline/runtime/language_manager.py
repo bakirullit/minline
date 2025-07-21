@@ -19,10 +19,7 @@ class LanguageManager:
 
     @classmethod
     def get(cls, lang: str, key: str) -> str:
-        try:
-            return cls._languages[lang][key]
-        except KeyError:
-            raise KeyError(f"Missing translation for key '{key}' in language '{lang}'")
+        return cls._languages.get(lang, {}).get(key, key)
 
 
 # Load on import
