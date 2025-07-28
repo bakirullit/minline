@@ -6,3 +6,8 @@ venv/
 __pypackages__/
 __pycache__/
 *.py[cod]
+dist/
+build/
+*.egg-info/
+__pycache__/
+*.pyc

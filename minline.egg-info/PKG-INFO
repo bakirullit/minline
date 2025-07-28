@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: minline
-Version: 0.1.0
+Version: 0.1.1
 Summary: Menu-inline framework for Telegram bots
 Author: bakirullit
 Author-email: Bakdaulet <bakirullit@gmail.com>
@@ -9,7 +9,7 @@ Requires-Python: >=3.10
 Description-Content-Type: text/markdown
 License-File: LICENSE
 Requires-Dist: aiogram>=3.3
-Requires-Dist: redis>=5.0.0
+Requires-Dist: aiosqlite
 Dynamic: author
 Dynamic: license-file
 Dynamic: requires-python
