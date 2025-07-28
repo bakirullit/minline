@@ -10,7 +10,7 @@
 
 ## ✨ Features
 
-- 🧭 Declarative `@app.menu("path")` navigation system
+- 🧭 Declarative `@app.route("path")` navigation system
 - 🔙 Automatic **back button** with `#route://` (trims the last segment)
 - 🌐 Link buttons and WebApp buttons via `Button(text, url=...)`
 - 🧩 Easy-to-extend components: `Menu`, `Button`, etc.
@@ -35,7 +35,7 @@ from minline import MinlineApp, Menu, Button
 
 app = MinlineApp("YOUR_BOT_TOKEN")
 
-@app.route("main")
+@app.route("/")
 def main_menu():
     return Menu(
         menu_id="main",
@@ -45,7 +45,7 @@ def main_menu():
         ]
     )
 
-@app.route("main/settings")
+@app.route("/settings")
 def settings_menu():
     return Menu(
         menu_id="settings",
