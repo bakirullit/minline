@@ -68,6 +68,7 @@ class MinlineApp:
                 instance.back_route = parent
 
             self.menu_registry[path] = instance
+            print(f"Registering {path}")
             return instance
         return decorator
 
@@ -87,7 +88,7 @@ class MinlineApp:
                     pass
         menu = self.menu_registry.get("/")
         if not menu:
-            await self.bot.send_message(chat_id, "Menu '/' not found.")
+            
             return
         _, _, message_id = await menu.render(chat_id, None, self.bot, lang)
         await self.session.set_state(user_id, {
@@ -174,7 +175,7 @@ class MinlineApp:
                     path_parts = current_path.rstrip("/").split("/")
                     new_path = "/" if len(path_parts) <= 2 else "/".join(path_parts[:-1])
                 else:
-                    new_path = current_path.rstrip("/") + "/" + arg
+                    new_path = (current_path.rstrip("/") + "/" + arg.lstrip("/")).replace("//", "/")
 
                 menu = self.menu_registry.get(new_path)
                 if not menu:
@@ -228,5 +229,7 @@ class MinlineApp:
         asyncio.run(self._run())
 
     async def _run(self):
+        print("Registered routes:", self.menu_registry.keys(), ", action commands:", self.action_commands.keys())
         await self.startup()
         await self.dp.start_polling(self.bot)
+        

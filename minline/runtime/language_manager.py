@@ -6,10 +6,18 @@ class LanguageManager:
 
     def __init__(self, directory: str = "languages"):
         self.directory = directory
+        self.ensure_directory(directory)
         self.load_languages(directory)
+
+    @staticmethod
+    def ensure_directory(path: str):
+        if not os.path.exists(path):
+            os.makedirs(path)
 
     @classmethod
     def load_languages(cls, folder_path: str = "languages"):
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
         for filename in os.listdir(folder_path):
             if filename.endswith(".json"):
                 lang_code = filename.split(".")[0]

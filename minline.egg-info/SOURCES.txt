@@ -10,6 +10,13 @@ minline.egg-info/dependency_links.txt
 minline.egg-info/requires.txt
 minline.egg-info/top_level.txt
 minline/components/__init__.py
+minline/components/activity/__init__.py
+minline/components/activity/activity.py
+minline/components/activity/input.py
+minline/components/activity/menu.py
+minline/components/buttons/__init__.py
 minline/components/buttons/button.py
 minline/runtime/__init__.py
 minline/runtime/language_manager.py
+minline/session/__init__.py
+minline/session/session_manager.py

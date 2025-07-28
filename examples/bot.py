@@ -1,38 +1,32 @@
-from aiogram import Dispatcher
-from aiogram.types import Message
-from aiogram.fsm.storage.memory import MemoryStorage
-
 from minline import MinlineApp, Menu, Button
+from aiogram.types import CallbackQuery
 
-BOT_TOKEN = "your_token_here"
+BOT_TOKEN = "bot_token_here"  # Replace with your bot token
+
 app = MinlineApp(BOT_TOKEN)
 
-@app.menu("main")
+@app.route("/")
 def main_menu():
     return Menu(
-        text_id="main_title",
+        menu_id="main",
         controls=[
-            [Button("Open profile", "open_profile")],
-            [Button("Settings", "open_settings")]
+            [Button("Settings", "#route:/settings")],
+            [Button("Visit GitHub", url="https://github.com/bakirullit")]
         ]
     )
 
-@app.menu("main/settings")
+@app.route("/settings")
 def settings_menu():
     return Menu(
-        text_id="settings_title",
+        menu_id="settings",
         controls=[
-            [Button("Back", "#route://")]
+            [Button("Say Hello!", "#say_hello")],
         ]
     )
 
-dp = Dispatcher(storage=MemoryStorage())
-dp.include_router(app.router)
-
-@dp.message(commands=["start"])
-async def start_handler(message: Message):
-    await app.open(message.chat.id, "main")
+@app.action("#say_hello")
+async def say_hello_handler(callback: CallbackQuery, _: str):
+    await callback.answer("Hello from action!", show_alert=True)
 
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(dp.start_polling(app.bot))
+    app.run()
