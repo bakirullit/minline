@@ -35,7 +35,7 @@ from minline import MinlineApp, Menu, Button
 
 app = MinlineApp("YOUR_BOT_TOKEN")
 
-@app.menu("main")
+@app.route("main")
 def main_menu():
     return Menu(
         menu_id="main",
@@ -45,7 +45,7 @@ def main_menu():
         ]
     )
 
-@app.menu("main/settings")
+@app.route("main/settings")
 def settings_menu():
     return Menu(
         menu_id="settings",
