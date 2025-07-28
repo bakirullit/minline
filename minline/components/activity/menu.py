@@ -1,12 +1,12 @@
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from minline.runtime.language_manager import LanguageManager
+from .activity import Activity
 
-class Menu:
-    def __init__(self, menu_id = None, controls: list = None, text_id: str = None, lang: str = "en"):
-        self.menu_id = menu_id  # will be set later by app
-        self.text_id = text_id  # fallback to menu_id if None
-        self.lang = lang
-        self.controls = controls
+class Menu(Activity):
+    def __init__(self, menu_id: str = None, controls: list = None, text_id: str = None, lang: str = "en"):
+        super().__init__(menu_id=menu_id, lang=lang)
+        self.text_id = text_id or menu_id
+        self.controls = controls or []
 
     async def render(self, chat_id, message_id, bot, lang="en") -> tuple[str, InlineKeyboardMarkup, int | None]:
         title = LanguageManager.get(lang, self.text_id or self.menu_id)
@@ -16,7 +16,7 @@ class Menu:
             if isinstance(row, list):
                 normalized_controls.append(row)
             else:
-                normalized_controls.append([row])  # single button case
+                normalized_controls.append([row])  # single buttonWebAppInfo case
 
         normalized_controls = []
         for row in self.controls:
@@ -29,7 +29,9 @@ class Menu:
             [
                 InlineKeyboardButton(
                     text=LanguageManager.get(lang, button.text_id),
-                    callback_data=f"{self.lang}:{self.menu_id}:{button.action}"
+                    callback_data=None if button.url or button.web_app_url else f"{lang}:{self.menu_id}:{button.action}",
+                    url=button.url,
+                    web_app=WebAppInfo(url=button.web_app_url) if button.web_app_url else None
                 )
                 for button in row
             ]

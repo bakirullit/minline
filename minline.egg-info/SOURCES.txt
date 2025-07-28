@@ -1,3 +1,4 @@
+LICENSE
 README.md
 pyproject.toml
 setup.py
@@ -9,13 +10,6 @@ minline.egg-info/dependency_links.txt
 minline.egg-info/requires.txt
 minline.egg-info/top_level.txt
 minline/components/__init__.py
-minline/components/base.py
-minline/components/pagination.py
 minline/components/buttons/button.py
-minline/components/buttons/link.py
-minline/components/buttons/toggle.py
 minline/runtime/__init__.py
-minline/runtime/handler.py
 minline/runtime/language_manager.py
-minline/runtime/registry.py
-minline/runtime/renderer.py
