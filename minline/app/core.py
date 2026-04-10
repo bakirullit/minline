@@ -1,9 +1,11 @@
 import asyncio
+import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart
 from aiogram.types import InlineKeyboardMarkup
 
-from minline.session import SessionManager, JsonSessionManager, MessageManager, SessionKeys
+from minline.session import SessionManager, SqliteSessionManager, MessageManager, SessionKeys
+from minline.user_storage import FileSystemUserStorage
 
 from minline.app.commands.context import CommandContext
 from minline.app.commands.registry import CommandRegistry
@@ -16,16 +18,20 @@ from minline.routing import (
     NavigationStack,
     NavigationProtocol,
 )
+from minline.routing.utils import parent_path
+
+logger = logging.getLogger(__name__)
 
 class MinlineApp:
-    def __init__(self, token: str, session_manager: SessionManager = None):
+    def __init__(self, token: str, session_manager: SessionManager = None, user_storage = None):
         self.bot = Bot(token)
         self.dp = Dispatcher()
         self.routes = RouteResolver()
         self.nav = NavigationStack()
         self.nav_protocol = NavigationProtocol()
         self.commands = CommandRegistry()
-        self.session: SessionManager = session_manager or JsonSessionManager("sessions.json")
+        self.session: SessionManager = session_manager or SqliteSessionManager("sessions.db")
+        self.user_storage = user_storage or FileSystemUserStorage()
         self.messages = MessageManager(self.session)
         self.is_404 = {}
 
@@ -97,33 +103,37 @@ class MinlineApp:
 
         markup = menu.render(show_back=show_back)
 
-        last_id = self.messages.get(chat_id)
+        last_id = await self.messages.get(chat_id)
 
         if isinstance(msg_obj, types.Message):
             try:
                 await msg_obj.delete()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Failed to delete message for chat {chat_id}: {e}")
         elif isinstance(msg_obj, types.CallbackQuery):
             try:
                 await msg_obj.message.delete()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Failed to delete callback message for chat {chat_id}: {e}")
 
         if last_id:
             try:
                 await self.bot.edit_message_text(chat_id=chat_id, message_id=last_id,
-                                                text=menu.menu_id, reply_markup=markup)
-                self.messages.set(chat_id, last_id)
+                                                text=menu.text, reply_markup=markup)
+                await self.messages.set(chat_id, last_id)
                 return
-            except Exception:
+            except Exception as e:
+                logger.warning(f"Failed to edit message {last_id} for chat {chat_id}: {e}")
                 try:
                     await self.bot.delete_message(chat_id, last_id)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning(f"Failed to delete message {last_id} for chat {chat_id}: {e}")
 
-        msg = await self.bot.send_message(chat_id, menu.menu_id, reply_markup=markup)
-        self.messages.set(chat_id, msg.message_id)
+        try:
+            msg = await self.bot.send_message(chat_id, menu.text, reply_markup=markup)
+            await self.messages.set(chat_id, msg.message_id)
+        except Exception as e:
+            logger.error(f"Failed to send message to chat {chat_id}: {e}")
 
 
 

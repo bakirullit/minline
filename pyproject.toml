@@ -8,7 +8,7 @@ version = "0.2.1"
 description = "Menu-inline framework for Telegram bots"
 authors = [{ name = "Bakirullit" }]
 requires-python = ">=3.10"
-dependencies = ["aiogram>=3.0"]
+dependencies = ["aiogram>=3.0", "aiosqlite>=0.17"]
 
 [tool.setuptools.packages.find]
 where = ["."]
