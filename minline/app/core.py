@@ -105,18 +105,29 @@ class MinlineApp:
 
         last_id = await self.messages.get(chat_id)
 
+        # If this is a callback query, try to edit the message in place
+        if isinstance(msg_obj, types.CallbackQuery):
+            try:
+                await self.bot.edit_message_text(
+                    chat_id=chat_id,
+                    message_id=msg_obj.message.message_id,
+                    text=menu.text,
+                    reply_markup=markup
+                )
+                await self.messages.set(chat_id, msg_obj.message.message_id)
+                return
+            except Exception as e:
+                logger.warning(f"Failed to edit callback message {msg_obj.message.message_id} for chat {chat_id}: {e}")
+        
+        # If this is a regular message, delete it
         if isinstance(msg_obj, types.Message):
             try:
                 await msg_obj.delete()
             except Exception as e:
-                logger.debug(f"Failed to delete message for chat {chat_id}: {e}")
-        elif isinstance(msg_obj, types.CallbackQuery):
-            try:
-                await msg_obj.message.delete()
-            except Exception as e:
-                logger.debug(f"Failed to delete callback message for chat {chat_id}: {e}")
+                logger.debug(f"Failed to delete user message for chat {chat_id}: {e}")
 
-        if last_id:
+        # Try to edit the last menu message if it exists
+        if last_id and not isinstance(msg_obj, types.CallbackQuery):
             try:
                 await self.bot.edit_message_text(chat_id=chat_id, message_id=last_id,
                                                 text=menu.text, reply_markup=markup)
@@ -129,6 +140,7 @@ class MinlineApp:
                 except Exception as e:
                     logger.warning(f"Failed to delete message {last_id} for chat {chat_id}: {e}")
 
+        # Send new message as fallback
         try:
             msg = await self.bot.send_message(chat_id, menu.text, reply_markup=markup)
             await self.messages.set(chat_id, msg.message_id)

@@ -1,6 +1,6 @@
 from minline import MinlineApp, Menu, Button
 
-app = MinlineApp("8124229474:AAEXksI8rnuczR-6V50NDUX5bkV65YLnP_s")
+app = MinlineApp("TELEGRAM_BOT_TOKEN")
 
 # Root menu
 @app.route("/")
@@ -25,7 +25,7 @@ def settings():
         ]
     )
 
-@app.route("/settings/notifications")
+@app.route("/settings/notification")
 def notifications():
     return Menu(
         menu_id="notifications",
