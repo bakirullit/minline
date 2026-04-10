@@ -12,6 +12,26 @@ Minline treats bot UI as a **routing problem**, not a callback mess.
 
 ---
 
+## Creating Menus
+
+`Menu` takes three parameters:
+
+```python
+Menu(
+    menu_id="settings",      # Unique identifier for this menu
+    controls=[               # Button layout
+        [Button("Save", "#route:/save")],
+        [Button("Reset", "#route:/reset")]
+    ],
+    text="⚙️ Settings",      # Text shown to user (default: menu_id)
+    back=True                # Show back button (default: True)
+)
+```
+
+**Important**: `text` is what users see. `menu_id` is an internal identifier.
+
+---
+
 ## Core Concepts
 
 ### 1. Routes
@@ -97,6 +117,57 @@ Instead:
 
 ---
 
+---
+
+## Installation
+
+```bash
+pip install minline
+```
+
+Or from source:
+
+```bash
+git clone https://github.com/bakirullit/minline
+cd minline
+pip install -e .
+```
+
+**Requirements**:
+- Python ≥ 3.10
+- aiogram ≥ 3.0
+- aiosqlite ≥ 0.17
+
+---
+
+## Configuration
+
+### Custom Session Manager
+
+By default, Minline uses SQLite for session storage. You can provide your own:
+
+```python
+from minline import MinlineApp
+from minline.session import SqliteSessionManager
+
+app = MinlineApp(
+    token="BOT_TOKEN",
+    session_manager=SqliteSessionManager("sessions.db")
+)
+```
+
+### Navigation Stack TTL
+
+Clean up old user stacks automatically (default: 24 hours):
+
+```python
+from minline.routing import NavigationStack
+
+nav = NavigationStack(ttl_seconds=86400)  # 24 hours
+```
+
+---
+
 ## Minimal Example
 
 ```python
@@ -149,6 +220,13 @@ It just refuses to pretend callbacks are a routing system.
 
 ## Status
 
-This project is under active refactoring.
-APIs are stabilizing.
-Expect clarity, not backward compatibility.
+This project is under active development.
+Recent improvements (April 2026):
+
+- **✅ AsyncIO-safe sessions**: Replaced `JsonSessionManager` with `SqliteSessionManager` using `asyncio.Lock`
+- **✅ Memory cleanup**: `NavigationStack` now includes automatic TTL-based cleanup (24h default)
+- **✅ Proper message editing**: Callback messages are edited in-place, no deletion/resend spam
+- **✅ Better error logging**: Replaced silent `except: pass` with structured logging (debug/warning/error)
+- **✅ Correct text rendering**: Menus now display `menu.text` instead of `menu_id`
+
+APIs are stable. All core features work as intended.
