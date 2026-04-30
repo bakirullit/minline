@@ -228,5 +228,45 @@ Recent improvements (April 2026):
 - **✅ Proper message editing**: Callback messages are edited in-place, no deletion/resend spam
 - **✅ Better error logging**: Replaced silent `except: pass` with structured logging (debug/warning/error)
 - **✅ Correct text rendering**: Menus now display `menu.text` instead of `menu_id`
+- **✅ Validation Layer**: Contract-based, user-defined validation for multi-step forms
 
 APIs are stable. All core features work as intended.
+
+---
+
+## Validation Layer
+
+Contract-based validation for multi-step forms:
+
+```python
+from minline import Step, FormWorkflow, ValidationResult
+
+# Define validator
+def email_validator(value: str) -> ValidationResult:
+    if "@" not in value:
+        return ValidationResult(False, "Email must contain @")
+    return ValidationResult(True)
+
+# Create steps
+steps = [
+    Step("email", "Your email?", validator=email_validator),
+    Step("age", "Your age?", validator=age_validator),
+]
+
+# Create workflow
+workflow = FormWorkflow(steps)
+
+# In message handler:
+result = await workflow.validate_and_advance(chat_id, session, user_input)
+if not result.ok:
+    await bot.send_message(chat_id, result.error)  # User sees error
+```
+
+**Key principles:**
+- Validation is fully user-owned
+- Framework only executes validators and reacts to results
+- No business rules in framework core
+- Optional (use it or don't)
+
+See [docs/VALIDATION.md](docs/VALIDATION.md) for full guide.
+

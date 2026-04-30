@@ -6,6 +6,8 @@ from aiogram.types import InlineKeyboardMarkup
 
 from minline.session import SessionManager, SqliteSessionManager, MessageManager, SessionKeys
 from minline.user_storage import FileSystemUserStorage
+from minline.core import Question, InputEvent
+from minline.ui.renderers import get_renderer
 
 from minline.app.commands.context import CommandContext
 from minline.app.commands.registry import CommandRegistry
@@ -34,6 +36,8 @@ class MinlineApp:
         self.user_storage = user_storage or FileSystemUserStorage()
         self.messages = MessageManager(self.session)
         self.is_404 = {}
+        self.workflow = None  # Form will be set by developer if needed
+        self.active_questions = {}  # Track active question per user: {chat_id: Question}
 
         @self.dp.message(CommandStart())
         async def _start(msg: Message):
@@ -41,6 +45,53 @@ class MinlineApp:
 
         @self.dp.message()
         async def my_custom_handler(msg: Message):
+            chat_id = msg.chat.id
+            text = msg.text
+            
+            # Check if user has active Question (standalone or from Form)
+            if chat_id in self.active_questions:
+                question = self.active_questions[chat_id]
+                
+                # Create InputEvent from message
+                input_event = InputEvent.from_text(text, chat_id, msg.from_user.id)
+                
+                # Validate input
+                result = await question.validate_input(input_event)
+                
+                if not result.ok:
+                    # Validation failed - show error with question
+                    error_msg = f"{result.error}\n\n{question.text}"
+                    try:
+                        await self.bot.send_message(chat_id, error_msg)
+                    except Exception as e:
+                        logger.error(f"Failed to send validation error: {e}", exc_info=True)
+                    return
+                
+                # Validation passed - handle with Form if exists
+                if self.workflow is not None:
+                    # Store answer in workflow
+                    await self.workflow.answer_question(chat_id, question.id, input_event.value)
+                    
+                    # Check if form complete
+                    if await self.workflow.is_complete_async(chat_id, self.session):
+                        # Form done
+                        del self.active_questions[chat_id]
+                        await self.workflow.reset(chat_id, self.session)
+                        await self._render(msg, "/form/complete")
+                        return
+                    
+                    # Advance to next question
+                    next_question = await self.workflow.next_question_async(chat_id, self.session)
+                    if next_question:
+                        self.active_questions[chat_id] = next_question
+                        await self._ask_question(chat_id, next_question)
+                    return
+                else:
+                    # Standalone question - done
+                    del self.active_questions[chat_id]
+                    # Proceed to normal routing
+            
+            # No active question - normal routing
             path = "/custom"
             await self._render(msg, path)
 
@@ -76,6 +127,21 @@ class MinlineApp:
             self.commands.register(name, func)
             return func
         return decorator
+    
+    async def _ask_question(self, chat_id: int, question: Question):
+        """Send question to user."""
+        try:
+            renderer = get_renderer(question.renderer)
+            markup = renderer.render(question, show_back=False)
+            
+            msg = await self.bot.send_message(
+                chat_id,
+                question.text,
+                reply_markup=markup
+            )
+            await self.messages.set(chat_id, msg.message_id)
+        except Exception as e:
+            logger.error(f"Failed to ask question {question.id} to {chat_id}: {e}", exc_info=True)
 
     async def _render(self, msg_obj: types.Message | types.CallbackQuery, path: str, push=True, source=None):
         if isinstance(msg_obj, types.Message):
