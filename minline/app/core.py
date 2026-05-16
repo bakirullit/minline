@@ -8,6 +8,8 @@ from minline.session import SessionManager, SqliteSessionManager, MessageManager
 from minline.user_storage import FileSystemUserStorage
 from minline.core import Question, InputEvent
 from minline.ui.renderers import get_renderer
+from minline.routing.registry import RouteRegistry
+from minline.routing.callback_router import CallbackRouter
 
 from minline.app.commands.context import CommandContext
 from minline.app.commands.registry import CommandRegistry
@@ -38,6 +40,11 @@ class MinlineApp:
         self.is_404 = {}
         self.workflow = None  # Form will be set by developer if needed
         self.active_questions = {}  # Track active question per user: {chat_id: Question}
+        
+        # New: Tight routing transport layer
+        self.route_registry = RouteRegistry()
+        self.callback_router = CallbackRouter(self.route_registry)
+        self._startup_complete = False
 
         @self.dp.message(CommandStart())
         async def _start(msg: Message):
@@ -133,8 +140,22 @@ class MinlineApp:
 
 
     def route(self, path: str):
+        """
+        Register a route handler and add to tight routing transport layer.
+        
+        Args:
+            path: Route path (e.g., "/settings/books")
+        
+        Returns:
+            Decorator function
+        """
         def decorator(func):
+            # Register with legacy route resolver (for backward compatibility)
             self.routes.register(path, func)
+            
+            # Register with new tight routing transport layer
+            self.route_registry.register(path, func, command="ml")
+            
             return func
         return decorator
 
@@ -239,6 +260,35 @@ class MinlineApp:
 
     def parent_path(self, path: str) -> str:
         return parent_path(path)
+    
+    async def _startup(self):
+        """
+        Initialize framework on startup.
+        Called before polling begins.
+        Finalizes route registry and sets up callback router.
+        """
+        if self._startup_complete:
+            return
+        
+        logger.info("Minline starting up...")
+        
+        # Finalize route registry (enables collision detection)
+        self.route_registry.finalize()
+        
+        # Setup callback router
+        self.callback_router.setup()
+        self.dp.include_router(self.callback_router.get_router())
+        
+        # Log statistics
+        registry_stats = self.route_registry.get_stats()
+        logger.info(f"✓ Minline ready. Routes: {registry_stats['total_routes']}")
+        
+        self._startup_complete = True
         
     def run(self):
-        asyncio.run(self.dp.start_polling(self.bot))
+        """Run the bot with proper startup sequence."""
+        async def main():
+            await self._startup()
+            await self.dp.start_polling(self.bot)
+        
+        asyncio.run(main())
