@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "minline"
-version = "1.0.0"
+version = "1.1.0"
 description = "Menu-inline framework for Telegram bots"
 authors = [{ name = "Bakirullit" }]
 requires-python = ">=3.10"
