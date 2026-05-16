@@ -1,9 +1,11 @@
 """Form - optional orchestration layer for multi-step Questions."""
 
-from typing import List, Optional
-from minline.core import Question
+from typing import List, Optional, TYPE_CHECKING
 from minline.session import SessionManager
 import json
+
+if TYPE_CHECKING:
+    from minline.core import Question
 
 
 class Form:
@@ -14,7 +16,7 @@ class Form:
     Questions are the primitives. Forms coordinate them.
     """
     
-    def __init__(self, id: str, questions: List[Question]):
+    def __init__(self, id: str, questions: List["Question"]):
         """
         Initialize Form.
         

@@ -70,13 +70,13 @@ class MinlineApp:
                 # Validation passed - handle with Form if exists
                 if self.workflow is not None:
                     # Store answer in workflow
-                    await self.workflow.answer_question(chat_id, question.id, input_event.value)
+                    await self.workflow.answer_question_async(chat_id, self.session, question.id, input_event.value)
                     
                     # Check if form complete
                     if await self.workflow.is_complete_async(chat_id, self.session):
                         # Form done
                         del self.active_questions[chat_id]
-                        await self.workflow.reset(chat_id, self.session)
+                        await self.workflow.reset_async(chat_id, self.session)
                         await self._render(msg, "/form/complete")
                         return
                     
@@ -91,7 +91,16 @@ class MinlineApp:
                     del self.active_questions[chat_id]
                     # Proceed to normal routing
             
-            # No active question - normal routing
+            # No active question - check if workflow exists and start it
+            if self.workflow is not None and chat_id not in self.active_questions:
+                # Try to get first question from form
+                first_question = await self.workflow.get_current_question_async(chat_id, self.session)
+                if first_question:
+                    self.active_questions[chat_id] = first_question
+                    await self._ask_question(chat_id, first_question)
+                    return
+            
+            # Normal routing
             path = "/custom"
             await self._render(msg, path)
 
@@ -110,8 +119,15 @@ class MinlineApp:
                 path = raw if raw.startswith("/") else f"{base}/{raw}"
                 await self._render(cb, path, push=True)
                 return
+            
+            # Handle Button route= parameter
+            if data.startswith("__route:"):
+                path = data.replace("__route:", "")
+                await self._render(cb, path, push=True)
+                return
 
             await cb.answer("Action executed")
+
 
 
 
